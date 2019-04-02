@@ -42,7 +42,7 @@ public class Client {
         }
         catch (UnknownHostException e) {
             System.out.println("ERROR: Unknown host. " + e.getMessage());
-            System.out.println("Usage: ./client <port-num> <server-address> <server-port>");
+            System.out.println("Usage: ./client <server-address> [mins]");
             System.exit(1);
         }
 
@@ -139,23 +139,32 @@ public class Client {
     }
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: ./client <server-address>");
+        int mins = -1;
+        if (args.length == 2) {
+            try {
+                mins = Integer.parseInt(args[1]);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("ERROR: " + e.getMessage());
+                System.exit(1);
+            }
+        }
+        else if (args.length != 1) {
+            System.out.println("Usage: ./client <server-address> [mins]");
             System.exit(1);
         }
         final Client client = new Client(args[0]);
 
-        InputStreamReader isr = new InputStreamReader(System.in);
-        BufferedReader br = new BufferedReader(isr);
-
-        System.out.println("Enter number of mins to run");
-        int mins = 1;
-        try {
+        if (mins == -1) {
+            InputStreamReader isr = new InputStreamReader(System.in);
+            BufferedReader br = new BufferedReader(isr);
+            System.out.println("Enter number of mins to run");
+            try {
                 mins = Integer.parseInt(br.readLine());
-        }
-        catch (Exception e) {
-            System.out.println("ERROR: " + e.getMessage());
-            System.exit(1);
+            } catch (Exception e) {
+                System.out.println("ERROR: " + e.getMessage());
+                System.exit(1);
+            }
         }
 
         System.out.println("UDP Client Started...");
