@@ -106,7 +106,7 @@ public class Client {
         InputStreamReader isr = new InputStreamReader(System.in);
         BufferedReader br = new BufferedReader(isr);
 
-        System.out.println("Enter number of hours to run");
+        System.out.println("Enter number of mins to run");
         int mins = 1;
         try {
                 mins = Integer.parseInt(br.readLine());
