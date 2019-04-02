@@ -14,8 +14,11 @@ public class ClientReceiver extends Thread {
 
     private final static String LOG_FILE = "log.txt";
 
+    private static Runtime rt;
+
     public ClientReceiver(DatagramSocket clientSocket) {
         this.clientSocket = clientSocket;
+        rt = Runtime.getRuntime();
     }
 
     public void run() {
@@ -100,6 +103,7 @@ public class ClientReceiver extends Thread {
                 smoothedTheta,
                 currTimeStr,
                 correctTimeStr);
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 
         try {
             FileWriter fw = new FileWriter(LOG_FILE, true);

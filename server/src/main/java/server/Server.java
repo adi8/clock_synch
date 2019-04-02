@@ -1,10 +1,9 @@
 package server;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+import java.net.*;
 import java.time.Instant;
+import java.util.Enumeration;
 
 public class Server {
 
@@ -24,6 +23,40 @@ public class Server {
         }
 
         // TODO: Print the servers IP address(es)
+    }
+
+    public static String getAddress() {
+        String ipAddress = "";
+        try {
+            for (final Enumeration<NetworkInterface> interfaces
+                 = NetworkInterface.getNetworkInterfaces();
+                 interfaces.hasMoreElements();)
+            {
+                final NetworkInterface cur = interfaces.nextElement();
+
+                if ( cur.isLoopback() )
+                    continue;
+
+                if (!(cur.getDisplayName().startsWith("w") || cur.getDisplayName().startsWith("e")))
+                    continue;
+
+                for (final InterfaceAddress addr : cur.getInterfaceAddresses()) {
+                    final InetAddress inetAddr = addr.getAddress();
+
+                    if (!(inetAddr instanceof Inet4Address))
+                        continue;
+
+                    ipAddress += inetAddr.getHostAddress() + " ";
+                }
+
+            }
+        }
+        catch (Exception e) {
+            System.out.println("Failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return ipAddress;
     }
 
     private void listen() {
@@ -64,6 +97,7 @@ public class Server {
     public static void main(String[] args) {
         Server server = new Server();
         System.out.println("UDP server started...");
+        System.out.println("IP Address: " + getAddress());
         server.listen();
     }
 }
