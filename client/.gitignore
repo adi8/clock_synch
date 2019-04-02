@@ -6,3 +6,6 @@ build
 
 # Ignore .idea directory
 .idea
+
+log.txt
+report.log

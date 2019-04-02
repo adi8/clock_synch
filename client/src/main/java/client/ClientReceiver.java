@@ -1,5 +1,6 @@
 package client;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -11,6 +12,8 @@ import java.util.List;
 public class ClientReceiver extends Thread {
     private DatagramSocket clientSocket;
 
+    private final static String LOG_FILE = "log.txt";
+
     public ClientReceiver(DatagramSocket clientSocket) {
         this.clientSocket = clientSocket;
     }
@@ -19,8 +22,23 @@ public class ClientReceiver extends Thread {
         String msg;
 
         // Print headers for report
-        System.out.format("%-10s %-10s %-10s %-10s %-21s %-21s\n", "Packet", "RTT", "θ", "Smoothed θ", "Current", "Corrected");
-        System.out.println("----------------------------------------------------------------------------------------");
+        try {
+            FileWriter fw = new FileWriter(LOG_FILE);
+            String header = String.format("%-10s %-10s %-10s %-10s %-21s %-21s\n", "Packet", "RTT", "θ", "Smoothed θ", "Current", "Corrected");
+
+            // Print to console
+            System.out.println(header);
+            System.out.println("----------------------------------------------------------------------------------------");
+
+            // Print to file
+            fw.write(header);
+            fw.write("----------------------------------------------------------------------------------------\n");
+            fw.flush();
+            fw.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
 
         while (true) {
             byte[] buf = new byte[1024];
@@ -75,13 +93,26 @@ public class ClientReceiver extends Thread {
         String currTimeStr = sdf.format(new Date((long)(currTime * 1000d)));
         String correctTimeStr = sdf.format(new Date((long)(correctedTime * 1000d)));
 
-        System.out.format("%-10d %-10.6f %-10.6f %-10.6f %-21s %-21s\n",
+        String record = String.format("%-10d %-10.6f %-10.6f %-10.6f %-21s %-21s\n",
                 seq,
                 rtt,
                 theta,
                 smoothedTheta,
                 currTimeStr,
                 correctTimeStr);
+
+        try {
+            FileWriter fw = new FileWriter(LOG_FILE, true);
+
+            System.out.println(record);
+
+            fw.write(record);
+            fw.flush();
+            fw.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
 
     }
 

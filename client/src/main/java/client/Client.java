@@ -1,6 +1,7 @@
 package client;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
@@ -16,6 +17,8 @@ public class Client {
     private final static int SERVER_PORT = 4011;
 
     private final static int CLIENT_PORT = 4012;
+
+    private final static String REPORT = "report.log";
 
     private final AtomicInteger seq;
 
@@ -88,12 +91,51 @@ public class Client {
             clientSocket.send(p);
         }
         catch (IOException e) {
-            System.out.println("ERROR: asdf" + e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
         }
     }
 
     public int getSentPackets() {
         return sentPackets;
+    }
+
+    public double findAverage(List<Double> data) {
+        double sum = 0;
+        for (double val : data) {
+            sum += val;
+        }
+
+        return sum / data.size();
+    }
+
+    public void printReport() {
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(REPORT);
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+            return;
+        }
+
+        double avgRTT = findAverage(seqRTT);
+        double avgTheta = findAverage(seqTheta);
+
+        String report = String.format("Number of packets sent     : %d\n", getSentPackets()) +
+                        String.format("Number of packets received : %d\n", seqRecv.size()) +
+                        String.format("Number of packets dropped  : %d\n", seqDropped.size()) +
+                        String.format("Average round trip time    : %.2f\n", avgRTT) +
+                        String.format("Average theta              : %.2f\n", avgTheta);
+
+        try {
+            System.out.println(report);
+            fw.write(report);
+            fw.flush();
+            fw.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
     }
 
     public static void main(String[] args) {
@@ -155,9 +197,7 @@ public class Client {
         exitTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("Number of packets Sent: " + client.getSentPackets());
-                System.out.println("Number of packets Received: " + Client.seqRecv.size());
-                System.out.println("Number of packets Dropped: " + Client.seqDropped.size());
+                client.printReport();
                 System.exit(0);
             }
         }, mins*60*1000);
