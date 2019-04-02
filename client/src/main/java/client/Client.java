@@ -103,18 +103,18 @@ public class Client {
         }
         final Client client = new Client(args[0]);
 
-//        InputStreamReader isr = new InputStreamReader(System.in);
-//        BufferedReader br = new BufferedReader(isr);
-//
-//        System.out.println("Enter number of minutes to run");
-//        int mins;
-//        try {
-//                mins = Integer.parseInt(br.readLine());
-//        }
-//        catch (Exception e) {
-//            System.out.println("ERROR: " + e.getMessage());
-//            System.exit(1);
-//        }
+        InputStreamReader isr = new InputStreamReader(System.in);
+        BufferedReader br = new BufferedReader(isr);
+
+        System.out.println("Enter number of hours to run");
+        int mins = 1;
+        try {
+                mins = Integer.parseInt(br.readLine());
+        }
+        catch (Exception e) {
+            System.out.println("ERROR: " + e.getMessage());
+            System.exit(1);
+        }
 
         System.out.println("UDP Client Started...");
 
@@ -160,7 +160,7 @@ public class Client {
                 System.out.println("Number of packets Dropped: " + Client.seqDropped.size());
                 System.exit(0);
             }
-        }, 2*60*1000);
+        }, mins*60*1000);
 
     }
 }

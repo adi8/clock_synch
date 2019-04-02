@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mkdir -p build/classes/java/main
+javac -d build/classes/java/main src/main/java/*/*.java 
