@@ -3,6 +3,7 @@ package server;
 import java.io.IOException;
 import java.net.*;
 import java.time.Instant;
+import java.util.Date;
 import java.util.Enumeration;
 
 public class Server {
@@ -12,6 +13,8 @@ public class Server {
     private final static int SERVER_PORT = 4011;
 
     private final static int CLIENT_PORT = 4012;
+
+    public static int packetRecvd = 0;
 
     public Server() {
         try {
@@ -85,6 +88,13 @@ public class Server {
                                                      p.getAddress(),
                                                      CLIENT_PORT);
 
+            String currentStat = String.format("%d\t %f\t\t %s",
+                   ++packetRecvd,
+                   currSecondsSinceEpoch,
+                    (new Date((long)(currSecondsSinceEpoch * 1000d))));
+
+            System.out.println(currentStat);
+
             try {
                 this.serverSocket.send(resp);
             }
@@ -98,6 +108,9 @@ public class Server {
         Server server = new Server();
         System.out.println("UDP server started...");
         System.out.println("IP Address: " + getAddress());
+        String header = "Packet\t Current Time (ms since epoch)\t Current Time\n" +
+                        "-----------------------------------------------------";
+        System.out.println(header);
         server.listen();
     }
 }

@@ -14,11 +14,10 @@ public class ClientReceiver extends Thread {
 
     private final static String LOG_FILE = "log.txt";
 
-    private static Runtime rt;
+    public static double smoothedThetaSum = 0d;
 
     public ClientReceiver(DatagramSocket clientSocket) {
         this.clientSocket = clientSocket;
-        rt = Runtime.getRuntime();
     }
 
     public void run() {
@@ -89,8 +88,14 @@ public class ClientReceiver extends Thread {
 
         int idx = findMinIDX(tmpRTT);
         double smoothedTheta = tmpTheta.get(idx);
+        Client.smoothedTheta.add(smoothedTheta);
+
         double currTime = Instant.now().toEpochMilli() / 1000d;
-        double correctedTime = currTime + smoothedTheta;
+
+        // Add all smoothedTheat till this point
+        smoothedThetaSum += smoothedTheta;
+
+        double correctedTime = currTime + smoothedThetaSum;
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         String currTimeStr = sdf.format(new Date((long)(currTime * 1000d)));
@@ -103,7 +108,6 @@ public class ClientReceiver extends Thread {
                 smoothedTheta,
                 currTimeStr,
                 correctTimeStr);
-        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 
         try {
             FileWriter fw = new FileWriter(LOG_FILE, true);

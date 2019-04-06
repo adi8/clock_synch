@@ -34,6 +34,8 @@ public class Client {
 
     public static List<Double> seqTheta;
 
+    public static List<Double> smoothedTheta;
+
     public static int sentPackets;
 
     public Client(String serverAddr) {
@@ -53,6 +55,7 @@ public class Client {
         seqDropped = Collections.synchronizedList(new ArrayList<>());
         seqRTT = Collections.synchronizedList(new ArrayList<>());
         seqTheta = Collections.synchronizedList(new ArrayList<>());
+        smoothedTheta = Collections.synchronizedList(new ArrayList<>());
 
         sentPackets = 0;
 
@@ -124,6 +127,7 @@ public class Client {
         String report = String.format("Number of packets sent     : %d\n", getSentPackets()) +
                         String.format("Number of packets received : %d\n", seqRecv.size()) +
                         String.format("Number of packets dropped  : %d\n", seqDropped.size()) +
+                        String.format("Percentage of packet drops : %f\n", ((double)seqDropped.size())/getSentPackets()) +
                         String.format("Average round trip time    : %.2f\n", avgRTT) +
                         String.format("Average theta              : %.2f\n", avgTheta);
 
@@ -199,7 +203,7 @@ public class Client {
                     Client.seqSent.remove(i);
                 }
             }
-        }, 15*1000, 15*1000);
+        }, 15*1000, 3*1000);
 
         // End the program after 1 minute
         Timer exitTimer = new Timer();
