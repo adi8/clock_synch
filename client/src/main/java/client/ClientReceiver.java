@@ -14,7 +14,7 @@ public class ClientReceiver extends Thread {
 
     private final static String LOG_FILE = "log.txt";
 
-    public static double smoothedThetaSum = 0d;
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.S");
 
     public ClientReceiver(DatagramSocket clientSocket) {
         this.clientSocket = clientSocket;
@@ -26,7 +26,7 @@ public class ClientReceiver extends Thread {
         // Print headers for report
         try {
             FileWriter fw = new FileWriter(LOG_FILE);
-            String header = String.format("%-10s %-10s %-10s %-10s %-21s %-21s\n", "Packet", "RTT", "θ", "Smoothed θ", "Current", "Corrected");
+            String header = String.format("%-10s %-10s %-10s %-10s %-24s %-24s\n", "Packet", "RTT", "θ", "Smoothed θ", "Current", "Corrected");
 
             // Print to console
             System.out.println(header);
@@ -71,7 +71,7 @@ public class ClientReceiver extends Thread {
             }
             else {
                 Client.seqDropped.add(seq);
-                System.out.format("%-10d %-10s %-10s %-10s %-21s %-21s\n", seq, "-", "-", "-", "-", "-");
+                System.out.format("%-10d %-10s %-10s %-10s %-24s %-24s\n", seq, "-", "-", "-", "-", "-");
             }
         }
     }
@@ -92,16 +92,12 @@ public class ClientReceiver extends Thread {
 
         double currTime = Instant.now().toEpochMilli() / 1000d;
 
-        // Add all smoothedTheat till this point
-        smoothedThetaSum += smoothedTheta;
+        double correctedTime = currTime + smoothedTheta;
 
-        double correctedTime = currTime + smoothedThetaSum;
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         String currTimeStr = sdf.format(new Date((long)(currTime * 1000d)));
         String correctTimeStr = sdf.format(new Date((long)(correctedTime * 1000d)));
 
-        String record = String.format("%-10d %-10.6f %-10.6f %-10.6f %-21s %-21s\n",
+        String record = String.format("%-10d %-10.6f %-10.6f %-10.6f %-24s %-24s\n",
                 seq,
                 rtt,
                 theta,

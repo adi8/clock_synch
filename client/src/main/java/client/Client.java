@@ -203,7 +203,7 @@ public class Client {
                     Client.seqSent.remove(i);
                 }
             }
-        }, 15*1000, 3*1000);
+        }, 1*1000, 2*1000);
 
         // End the program after 1 minute
         Timer exitTimer = new Timer();

@@ -2,6 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Enumeration;
@@ -14,6 +15,8 @@ public class Server {
 
     private final static int CLIENT_PORT = 4012;
 
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.S");
+
     public static int packetRecvd = 0;
 
     public Server() {
@@ -24,8 +27,6 @@ public class Server {
             System.out.println("ERROR: Socket error. " + e.getMessage());
             System.exit(1);
         }
-
-        // TODO: Print the servers IP address(es)
     }
 
     public static String getAddress() {
@@ -91,7 +92,7 @@ public class Server {
             String currentStat = String.format("%d\t %f\t\t %s",
                    ++packetRecvd,
                    currSecondsSinceEpoch,
-                    (new Date((long)(currSecondsSinceEpoch * 1000d))));
+                    sdf.format(new Date((long)(currSecondsSinceEpoch * 1000d))));
 
             System.out.println(currentStat);
 
@@ -109,7 +110,7 @@ public class Server {
         System.out.println("UDP server started...");
         System.out.println("IP Address: " + getAddress());
         String header = "Packet\t Current Time (ms since epoch)\t Current Time\n" +
-                        "-----------------------------------------------------";
+                        "---------------------------------------------------------------------";
         System.out.println(header);
         server.listen();
     }
