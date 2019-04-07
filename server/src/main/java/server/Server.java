@@ -89,7 +89,7 @@ public class Server {
                                                      p.getAddress(),
                                                      CLIENT_PORT);
 
-            String currentStat = String.format("%d\t %f\t\t %s",
+            String currentStat = String.format("%d\t\t %f\t\t %s",
                    ++packetRecvd,
                    currSecondsSinceEpoch,
                     sdf.format(new Date((long)(currSecondsSinceEpoch * 1000d))));

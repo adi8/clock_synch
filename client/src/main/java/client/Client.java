@@ -20,6 +20,8 @@ public class Client {
 
     private final static String REPORT = "report.log";
 
+    private final static String HISTO = "histo.txt";
+
     private final AtomicInteger seq;
 
     public static List<Integer> seqSent;
@@ -35,6 +37,8 @@ public class Client {
     public static List<Double> seqTheta;
 
     public static List<Double> smoothedTheta;
+
+    public static Map<Double, Integer> histoMap;
 
     public static int sentPackets;
 
@@ -56,6 +60,7 @@ public class Client {
         seqRTT = Collections.synchronizedList(new ArrayList<>());
         seqTheta = Collections.synchronizedList(new ArrayList<>());
         smoothedTheta = Collections.synchronizedList(new ArrayList<>());
+        histoMap = Collections.synchronizedMap(new HashMap<Double, Integer>());
 
         sentPackets = 0;
 
@@ -142,6 +147,51 @@ public class Client {
         }
     }
 
+    public void createHisto() {
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(HISTO);
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+            return;
+        }
+
+        List<Double> sortedKeys = new ArrayList<>(histoMap.keySet());
+
+        Collections.sort(sortedKeys);
+
+        for (Double key : sortedKeys) {
+            int freq = Client.histoMap.get(key);
+            String stars = getStars(freq);
+            String histoLine = String.format("%9.6f:%s\n", key, stars);
+            try {
+                fw.write(histoLine);
+                fw.flush();
+            }
+            catch (IOException e) {
+                System.out.println("ERROR: " + e.getMessage());
+            }
+
+        }
+
+        try {
+            fw.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
+
+    }
+
+    public String getStars(int num) {
+        StringBuilder stars = new StringBuilder();
+        for (int i = 0; i < num; i++) {
+            stars.append('*');
+        }
+        return stars.toString();
+    }
+
     public static void main(String[] args) {
         int mins = -1;
         if (args.length == 2) {
@@ -211,6 +261,7 @@ public class Client {
             @Override
             public void run() {
                 client.printReport();
+                client.createHisto();
                 System.exit(0);
             }
         }, mins*60*1000);

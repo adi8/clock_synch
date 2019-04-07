@@ -94,6 +94,10 @@ public class ClientReceiver extends Thread {
 
         double correctedTime = currTime + smoothedTheta;
 
+        // Count theta calculated for histogram
+        int val = Client.histoMap.getOrDefault(theta, 0) + 1;
+        Client.histoMap.put(theta, val);
+
         String currTimeStr = sdf.format(new Date((long)(currTime * 1000d)));
         String correctTimeStr = sdf.format(new Date((long)(correctedTime * 1000d)));
 
