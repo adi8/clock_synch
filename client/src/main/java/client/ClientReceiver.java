@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -28,15 +27,16 @@ public class ClientReceiver extends Thread {
         // Print headers for report
         try {
             FileWriter fw = new FileWriter(LOG_FILE);
-            String header = String.format("%-10s %-10s %-10s %-10s %-24s %-24s\n", "Packet", "RTT", "θ", "Smoothed θ", "Current", "Corrected");
+            String header = String.format("%-10s %-10s %-10s %-10s %-10s %-24s %-24s\n",
+                    "Packet", "RTT", "θ", "Smoothed θ", "Ins. Drift", "Current", "Corrected");
 
             // Print to console
             System.out.println(header);
-            System.out.println("----------------------------------------------------------------------------------------");
+            System.out.println("-----------------------------------------------------------------------------------------------");
 
             // Print to file
             fw.write(header);
-            fw.write("----------------------------------------------------------------------------------------\n");
+            fw.write("-----------------------------------------------------------------------------------------------------\n");
             fw.flush();
             fw.close();
         }
@@ -81,7 +81,7 @@ public class ClientReceiver extends Thread {
             }
             else {
                 Client.seqDropped.add(seq);
-                System.out.format("%-10d %-10s %-10s %-10s %-24s %-24s\n", seq, "-", "-", "-", "-", "-");
+                System.out.format("%-10d %-10s %-10s %-10s %-10s %-24s %-24s\n", seq, "-", "-", "-", "-", "-", "-");
             }
 
             signalEnd();
@@ -97,6 +97,8 @@ public class ClientReceiver extends Thread {
 
         List<Double> tmpRTT = Client.seqRTT.subList(Math.max(Client.seqRTT.size() - 8, 0), Client.seqRTT.size());
         List<Double> tmpTheta = Client.seqTheta.subList(Math.max(Client.seqTheta.size() - 8, 0), Client.seqTheta.size());
+        double instDrift = (theta - Client.seqTheta.get(Math.max(Client.seqTheta.size() - 1, 0))) / 10 ;
+        Client.drift.add(instDrift);
 
         int idx = findMinIDX(tmpRTT);
         double smoothedTheta = tmpTheta.get(idx);
@@ -107,17 +109,18 @@ public class ClientReceiver extends Thread {
         double correctedTime = currTime + smoothedTheta;
 
         // Count theta calculated for histogram
-        int val = Client.histoMap.getOrDefault(theta, 0) + 1;
-        Client.histoMap.put(theta, val);
+        int val = Client.histoMap.getOrDefault(instDrift, 0) + 1;
+        Client.histoMap.put(instDrift, val);
 
         String currTimeStr = sdf.format(new Date((long)(currTime * 1000d)));
         String correctTimeStr = sdf.format(new Date((long)(correctedTime * 1000d)));
 
-        String record = String.format("%-10d %-10.6f %-10.6f %-10.6f %-24s %-24s\n",
+        String record = String.format("%-10d %10.6f %10.6f %10.6f %10.6f %-24s %-24s\n",
                 seq,
                 rtt,
                 theta,
                 smoothedTheta,
+                instDrift,
                 currTimeStr,
                 correctTimeStr);
 

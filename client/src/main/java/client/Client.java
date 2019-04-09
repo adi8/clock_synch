@@ -46,6 +46,8 @@ public class Client {
 
     public static List<Double> smoothedTheta;
 
+    public static List<Double> drift;
+
     public static Map<Double, Integer> histoMap;
 
     public static int sentPackets;
@@ -76,6 +78,7 @@ public class Client {
         smoothedTheta = Collections.synchronizedList(new ArrayList<>());
         histoMap = Collections.synchronizedMap(new HashMap<Double, Integer>());
         seqDroppedTime = Collections.synchronizedList(new ArrayList<>());
+        drift = Collections.synchronizedList(new ArrayList<>());
 
         exitFlag = false;
         l = new ReentrantLock();
@@ -147,13 +150,15 @@ public class Client {
 
         double avgRTT = findAverage(seqRTT);
         double avgTheta = findAverage(seqTheta);
+        double avgDrift = findAverage(drift);
 
         String report = String.format("Number of packets sent     : %d\n", getSentPackets()) +
                         String.format("Number of packets received : %d\n", seqRecv.size()) +
                         String.format("Number of packets dropped  : %d\n", seqDropped.size()) +
                         String.format("Percentage of packet drops : %f\n", ((double)seqDropped.size())/getSentPackets()) +
                         String.format("Average round trip time    : %.6f\n", avgRTT) +
-                        String.format("Average theta              : %.6f\n", avgTheta);
+                        String.format("Average theta              : %.6f\n", avgTheta) +
+                        String.format("Average drift rate         : %.6f\n", avgDrift);
 
         StringBuilder droppedReport = new StringBuilder();
         droppedReport.append("Dropped Packets: \n");
