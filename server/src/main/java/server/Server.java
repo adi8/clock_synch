@@ -15,7 +15,7 @@ public class Server {
 
     private final static int CLIENT_PORT = 4012;
 
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.S");
+    private final SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.S");
 
     public static int packetRecvd = 0;
 
@@ -89,7 +89,7 @@ public class Server {
                                                      p.getAddress(),
                                                      CLIENT_PORT);
 
-            String currentStat = String.format("%d\t\t %f\t\t %s",
+            String currentStat = String.format("%d\t %f\t\t %s",
                    ++packetRecvd,
                    currSecondsSinceEpoch,
                     sdf.format(new Date((long)(currSecondsSinceEpoch * 1000d))));

@@ -79,14 +79,17 @@ public class Client {
 
     public void send() {
         try {
+            // Create packet to send
             int sequenceNo = this.seq.incrementAndGet();
             double currSecondsSinceEpoch = Instant.now().toEpochMilli() / 1000d;
             String synchMsg = sequenceNo + " " + String.format("%.6f", currSecondsSinceEpoch);
-
             DatagramPacket p = new DatagramPacket(synchMsg.getBytes(),
                     synchMsg.getBytes().length,
                     serverAddress,
                     SERVER_PORT);
+
+            // Send the packet
+            clientSocket.send(p);
 
             // Add sequence to seqSent
             seqSent.add(sequenceNo);
@@ -94,9 +97,6 @@ public class Client {
 
             // Increment sent packet count
             sentPackets++;
-
-            // Send the packet
-            clientSocket.send(p);
         }
         catch (IOException e) {
             System.out.println("ERROR: " + e.getMessage());
