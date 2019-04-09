@@ -17,8 +17,11 @@ public class ClientReceiver extends Thread {
 
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.S");
 
+    double[] lastTime;
+
     public ClientReceiver(DatagramSocket clientSocket) {
         this.clientSocket = clientSocket;
+        lastTime = new double[2];
     }
 
     public void run() {
@@ -32,11 +35,11 @@ public class ClientReceiver extends Thread {
 
             // Print to console
             System.out.println(header);
-            System.out.println("-----------------------------------------------------------------------------------------------");
+            System.out.println("---------------------------------------------------------------------------------------------------------");
 
             // Print to file
             fw.write(header);
-            fw.write("-----------------------------------------------------------------------------------------------------\n");
+            fw.write("---------------------------------------------------------------------------------------------------------------\n");
             fw.flush();
             fw.close();
         }
@@ -71,7 +74,13 @@ public class ClientReceiver extends Thread {
             int seq = Integer.parseInt(msgParts[0]);
             if (Client.seqSent.contains(seq)) {
                 // Remove from seqSent and its corresponding time
-                Client.seqSentTime.remove(Client.seqSent.indexOf(seq));
+                int idx = Client.seqSent.indexOf(seq);
+
+                // Track last received sent time
+                lastTime[1] = lastTime[0];
+                lastTime[0] = Client.seqSentTime.get(idx);
+
+                Client.seqSentTime.remove(idx);
                 Client.seqSent.remove(new Integer(seq));
 
                 double t3 = Double.parseDouble(msgParts[1]);
@@ -101,10 +110,12 @@ public class ClientReceiver extends Thread {
         double smoothedTheta = tmpTheta.get(idx);
         Client.smoothedTheta.add(smoothedTheta);
 
-        double instDrift = (smoothedTheta - Client.smoothedTheta.get(Math.max(Client.smoothedTheta.size() - 2, 0))) / 10d ;
+        double currTime = Instant.now().toEpochMilli() / 1000d;
+
+        double timeElapsed =  currTime - lastTime[1];
+        double instDrift = (smoothedTheta - Client.smoothedTheta.get(Math.max(Client.smoothedTheta.size() - 2, 0))) / timeElapsed ;
         Client.drift.add(instDrift);
 
-        double currTime = Instant.now().toEpochMilli() / 1000d;
         double correctedTime = currTime + smoothedTheta;
 
         // Count theta calculated for histogram

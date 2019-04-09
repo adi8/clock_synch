@@ -58,6 +58,8 @@ public class Client {
 
     public static volatile Condition print;
 
+    public static int expTime;
+
     public Client(String serverAddr) {
         try {
             this.serverAddress = InetAddress.getByName(serverAddr);
@@ -110,12 +112,12 @@ public class Client {
                     serverAddress,
                     SERVER_PORT);
 
-            // Send the packet
-            clientSocket.send(p);
-
             // Add sequence to seqSent
             seqSent.add(sequenceNo);
             seqSentTime.add(currSecondsSinceEpoch);
+
+            // Send the packet
+            clientSocket.send(p);
 
             // Increment sent packet count
             sentPackets++;
@@ -152,13 +154,14 @@ public class Client {
         double avgTheta = findAverage(seqTheta);
         double avgDrift = findAverage(drift);
 
-        String report = String.format("Number of packets sent     : %d\n", getSentPackets()) +
-                        String.format("Number of packets received : %d\n", seqRecv.size()) +
-                        String.format("Number of packets dropped  : %d\n", seqDropped.size()) +
-                        String.format("Percentage of packet drops : %f\n", ((double)seqDropped.size())/getSentPackets()) +
-                        String.format("Average round trip time    : %.6f\n", avgRTT) +
-                        String.format("Average theta              : %.6f\n", avgTheta) +
-                        String.format("Average drift rate         : %.6f\n", avgDrift);
+        String report = String.format("Clock synch runt time (m)   : %d\n", Client.expTime) +
+                        String.format("Number of packets sent      : %d\n", getSentPackets()) +
+                        String.format("Number of packets received  : %d\n", seqRecv.size()) +
+                        String.format("Number of packets dropped   : %d\n", seqDropped.size()) +
+                        String.format("Percentage of packet drops  : %f\n", ((double)seqDropped.size())/getSentPackets()) +
+                        String.format("Average round trip time (s) : %.6f\n", avgRTT) +
+                        String.format("Average theta (s)           : %.6f\n", avgTheta) +
+                        String.format("Average drift rate (s)      : %.9f\n", avgDrift);
 
         StringBuilder droppedReport = new StringBuilder();
         droppedReport.append("Dropped Packets: \n");
@@ -166,11 +169,22 @@ public class Client {
             droppedReport.append(String.format("[%04d, %-8.6f]\n", seqDropped.get(i), seqDroppedTime.get(i)));
         }
 
+        StringBuilder histoReport = new StringBuilder();
+        histoReport.append("Histogram Report: \n");
+        List<Double> sortedKeys = new ArrayList<>(histoMap.keySet());
+        Collections.sort(sortedKeys);
+        for (double key : sortedKeys) {
+            int freq = Client.histoMap.get(key);
+            histoReport.append(String.format("%9.6f : %s\n", key, freq));
+        }
+
         try {
             System.out.println(report);
             System.out.println(droppedReport.toString());
+            System.out.println(histoReport.toString());
             fw.write(report);
             fw.write(droppedReport.toString());
+            fw.write(histoReport.toString());
             fw.flush();
             fw.close();
         }
@@ -229,6 +243,7 @@ public class Client {
         if (args.length == 2) {
             try {
                 mins = Integer.parseInt(args[1]);
+                Client.expTime = mins;
             }
             catch (NumberFormatException e) {
                 System.out.println("ERROR: " + e.getMessage());
