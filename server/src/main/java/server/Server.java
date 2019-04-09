@@ -109,7 +109,7 @@ public class Server {
         Server server = new Server();
         System.out.println("UDP server started...");
         System.out.println("IP Address: " + getAddress());
-        String header = "Packet\t Current Time (ms since epoch)\t Current Time\n" +
+        String header = "Packet\t Current Time (s since epoch)\t Current Time\n" +
                         "---------------------------------------------------------------------";
         System.out.println(header);
         server.listen();

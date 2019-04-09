@@ -62,6 +62,7 @@ public class ClientReceiver extends Thread {
             int seq = Integer.parseInt(msgParts[0]);
             if (Client.seqSent.contains(seq)) {
                 // Remove from seqSent and its corresponding time
+                Client.seqSentTime.remove(Client.seqSent.indexOf(seq));
                 Client.seqSent.remove(new Integer(seq));
 
                 double t3 = Double.parseDouble(msgParts[1]);
@@ -73,12 +74,18 @@ public class ClientReceiver extends Thread {
                 Client.seqDropped.add(seq);
                 System.out.format("%-10d %-10s %-10s %-10s %-24s %-24s\n", seq, "-", "-", "-", "-", "-");
             }
+
+            Client.l.lock();
+            if (Client.exitFlag && Client.seqSent.size() == 0) {
+                Client.print.signal();
+            }
+            Client.l.unlock();
         }
     }
 
     public void processTime(int seq, double t3, double t2, double t1, double t0) {
         double rtt = (t2 - t3) + (t0 - t1);
-        double theta = ((t2 - t3) - (t0 - t1)) / 2d;
+        double theta = ((t2 - t3) - (t0 - t1)) / 2;
         Client.seqRecv.add(seq);
         Client.seqRTT.add(rtt);
         Client.seqTheta.add(theta);

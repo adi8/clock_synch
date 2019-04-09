@@ -5,9 +5,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.sql.SQLOutput;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Client {
     private DatagramSocket clientSocket;
@@ -22,6 +26,8 @@ public class Client {
 
     private final static String HISTO = "histo.txt";
 
+    private final static int PACKET_TIMEOUT = 2;
+
     private final AtomicInteger seq;
 
     public static List<Integer> seqSent;
@@ -32,6 +38,8 @@ public class Client {
 
     public static List<Integer> seqDropped;
 
+    public static List<Double> seqDroppedTime;
+
     public static List<Double> seqRTT;
 
     public static List<Double> seqTheta;
@@ -41,6 +49,12 @@ public class Client {
     public static Map<Double, Integer> histoMap;
 
     public static int sentPackets;
+
+    public static volatile boolean exitFlag;
+
+    public static volatile Lock l;
+
+    public static volatile Condition print;
 
     public Client(String serverAddr) {
         try {
@@ -61,6 +75,11 @@ public class Client {
         seqTheta = Collections.synchronizedList(new ArrayList<>());
         smoothedTheta = Collections.synchronizedList(new ArrayList<>());
         histoMap = Collections.synchronizedMap(new HashMap<Double, Integer>());
+        seqDroppedTime = Collections.synchronizedList(new ArrayList<>());
+
+        exitFlag = false;
+        l = new ReentrantLock();
+        print = l.newCondition();
 
         sentPackets = 0;
 
@@ -133,12 +152,20 @@ public class Client {
                         String.format("Number of packets received : %d\n", seqRecv.size()) +
                         String.format("Number of packets dropped  : %d\n", seqDropped.size()) +
                         String.format("Percentage of packet drops : %f\n", ((double)seqDropped.size())/getSentPackets()) +
-                        String.format("Average round trip time    : %.2f\n", avgRTT) +
-                        String.format("Average theta              : %.2f\n", avgTheta);
+                        String.format("Average round trip time    : %.6f\n", avgRTT) +
+                        String.format("Average theta              : %.6f\n", avgTheta);
+
+        StringBuilder droppedReport = new StringBuilder();
+        droppedReport.append("Dropped Packets: \n");
+        for (int i = 0; i < seqDropped.size(); i++) {
+            droppedReport.append(String.format("[%04d, %-8.6f]\n", seqDropped.get(i), seqDroppedTime.get(i)));
+        }
 
         try {
             System.out.println(report);
+            System.out.println(droppedReport.toString());
             fw.write(report);
+            fw.write(droppedReport.toString());
             fw.flush();
             fw.close();
         }
@@ -232,7 +259,9 @@ public class Client {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                client.send();
+                if (!exitFlag) {
+                    client.send();
+                }
             }
         }, 0, 10*1000);
 
@@ -243,25 +272,43 @@ public class Client {
             public void run() {
                 List<Integer> idxToRemove = new ArrayList<>();
                 for(int i = 0; i < Client.seqSentTime.size(); i++) {
-                    if (Client.seqSentTime.get(i) - (Instant.now().toEpochMilli() / 1000d) >= 15d) {
+                    if (((Instant.now().toEpochMilli() / 1000d) - Client.seqSentTime.get(i)) >= PACKET_TIMEOUT) {
                         idxToRemove.add(i);
                     }
                 }
 
                 for (int i : idxToRemove) {
-                    Client.seqSentTime.remove(i);
-                    Client.seqSent.remove(i);
+                    if (Client.seqSent.size() > 0) {
+                        Client.seqDropped.add(Client.seqSent.get(i));
+                        Client.seqDroppedTime.add(Client.seqSentTime.get(i));
+                        Client.seqSentTime.remove(i);
+                        Client.seqSent.remove(i);
+                    }
                 }
             }
-        }, 1*1000, 2*1000);
+        }, 1*1000, PACKET_TIMEOUT*1000);
 
         // End the program after 1 minute
         Timer exitTimer = new Timer();
         exitTimer.schedule(new TimerTask() {
             @Override
             public void run() {
+                exitFlag = true;
+
+                Client.l.lock();
+
+                try {
+                    print.await();
+                }
+                catch (InterruptedException e) {
+                    System.out.println("ERROR: " + e.getMessage());
+                }
+
                 client.printReport();
                 client.createHisto();
+
+                Client.l.unlock();
+
                 System.exit(0);
             }
         }, mins*60*1000);
