@@ -97,15 +97,14 @@ public class ClientReceiver extends Thread {
 
         List<Double> tmpRTT = Client.seqRTT.subList(Math.max(Client.seqRTT.size() - 8, 0), Client.seqRTT.size());
         List<Double> tmpTheta = Client.seqTheta.subList(Math.max(Client.seqTheta.size() - 8, 0), Client.seqTheta.size());
-        double instDrift = (theta - Client.seqTheta.get(Math.max(Client.seqTheta.size() - 1, 0))) / 10 ;
-        Client.drift.add(instDrift);
-
         int idx = findMinIDX(tmpRTT);
         double smoothedTheta = tmpTheta.get(idx);
         Client.smoothedTheta.add(smoothedTheta);
 
-        double currTime = Instant.now().toEpochMilli() / 1000d;
+        double instDrift = (smoothedTheta - Client.smoothedTheta.get(Math.max(Client.smoothedTheta.size() - 2, 0))) / 10d ;
+        Client.drift.add(instDrift);
 
+        double currTime = Instant.now().toEpochMilli() / 1000d;
         double correctedTime = currTime + smoothedTheta;
 
         // Count theta calculated for histogram
