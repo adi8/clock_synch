@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.sql.SQLOutput;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -42,6 +44,13 @@ public class ClientReceiver extends Thread {
             System.out.println("ERROR: " + e.getMessage());
         }
 
+        try {
+            clientSocket.setSoTimeout(3 * 1000);
+        }
+        catch (SocketException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
+
         while (true) {
             byte[] buf = new byte[1024];
             DatagramPacket p = new DatagramPacket(buf, buf.length);
@@ -52,7 +61,7 @@ public class ClientReceiver extends Thread {
                 t0 = Instant.now().toEpochMilli() / 1000d;
             }
             catch(IOException e) {
-                System.out.println("ERROR: " + e.getMessage());
+                signalEnd();
                 continue;
             }
 
@@ -75,11 +84,7 @@ public class ClientReceiver extends Thread {
                 System.out.format("%-10d %-10s %-10s %-10s %-24s %-24s\n", seq, "-", "-", "-", "-", "-");
             }
 
-            Client.l.lock();
-            if (Client.exitFlag && Client.seqSent.size() == 0) {
-                Client.print.signal();
-            }
-            Client.l.unlock();
+            signalEnd();
         }
     }
 
@@ -145,5 +150,13 @@ public class ClientReceiver extends Thread {
         }
 
         return idx;
+    }
+
+    public void signalEnd() {
+        Client.l.lock();
+        if (Client.exitFlag && Client.seqSent.size() == 0) {
+            Client.print.signal();
+        }
+        Client.l.unlock();
     }
 }
