@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
-import java.sql.SQLOutput;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,7 +160,7 @@ public class Client {
                         String.format("Percentage of packet drops  : %f\n", ((double)seqDropped.size())/getSentPackets()) +
                         String.format("Average round trip time (s) : %.6f\n", avgRTT) +
                         String.format("Average theta (s)           : %.6f\n", avgTheta) +
-                        String.format("Average drift rate (s)      : %.9f\n", avgDrift);
+                        String.format("Average drift rate (s/s)    : %.9f\n", avgDrift);
 
         StringBuilder droppedReport = new StringBuilder();
         droppedReport.append("Dropped Packets: \n");
